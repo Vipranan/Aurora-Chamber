@@ -6,16 +6,12 @@ import AuroraBackground from "@/components/AuroraBackground";
 import BookingForm from "@/components/BookingForm";
 import BookingsList from "@/components/BookingsList";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
 
 const Index = () => {
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0);
-
-  // Mock bookings data
-  const mockBookings = [
-    { id: 1, chamber: "Chamber 1", timeSlot: "08:00 – 10:00" },
-    { id: 2, chamber: "Chamber 2", timeSlot: "11:00 – 14:00" },
-  ];
+  const [currentDate] = useState(new Date());
 
   const handleBookingSuccess = () => {
     setRefreshKey(prev => prev + 1);
@@ -58,7 +54,7 @@ const Index = () => {
             <BookingForm onBookingSuccess={handleBookingSuccess} />
           </div>
           <div className="w-full lg:w-auto lg:flex-1 max-w-2xl">
-            <BookingsList date="23/04/2024" bookings={mockBookings} key={refreshKey} />
+            <BookingsList date={format(currentDate, "dd/MM/yyyy")} refreshKey={refreshKey} />
           </div>
         </div>
       </div>

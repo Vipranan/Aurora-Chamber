@@ -1,4 +1,7 @@
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { format } from "date-fns";
+import { bookingsAPI } from "@/lib/api";
 
 interface TimeSlot {
   time: string;
@@ -12,6 +15,9 @@ interface TimeSlotGridProps {
 }
 
 const TimeSlotGrid = ({ selectedChamber, selectedDate, onSlotSelect }: TimeSlotGridProps) => {
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
   // Generate time slots from 9:00 to 17:00 in 45-minute intervals
   const generateTimeSlots = (): TimeSlot[] => {
     const slots: TimeSlot[] = [];
@@ -21,8 +27,8 @@ const TimeSlotGrid = ({ selectedChamber, selectedDate, onSlotSelect }: TimeSlotG
     while (hour < 17 || (hour === 17 && minute === 0)) {
       const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
       
-      // Mock some booked slots for demonstration
-      const isBooked = Math.random() > 0.7; // Randomly mark ~30% as booked
+      // Check if this slot is in the booked slots array
+      const isBooked = bookedSlots.includes(time);
       
       slots.push({ time, isBooked });
 
@@ -36,6 +42,25 @@ const TimeSlotGrid = ({ selectedChamber, selectedDate, onSlotSelect }: TimeSlotG
 
     return slots;
   };
+
+  // Fetch booked slots when chamber or date changes
+  useEffect(() => {
+    const fetchBookedSlots = async () => {
+      setLoading(true);
+      try {
+        const formattedDate = format(selectedDate, "dd/MM/yyyy");
+        const response = await bookingsAPI.getBookedSlots(selectedChamber, formattedDate);
+        setBookedSlots(response.bookedSlots || []);
+      } catch (error) {
+        console.error("Error fetching booked slots:", error);
+        setBookedSlots([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookedSlots();
+  }, [selectedChamber, selectedDate]);
 
   const timeSlots = generateTimeSlots();
 

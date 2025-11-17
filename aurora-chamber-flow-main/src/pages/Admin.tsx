@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Trash2, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import AuroraBackground from "@/components/AuroraBackground";
 import { toast } from "react-hot-toast";
+import { bookingsAPI, authAPI } from "@/lib/api";
+import { format } from "date-fns";
 
 interface Booking {
   id: number;
@@ -19,49 +21,106 @@ interface Booking {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState("23/04/2024");
-  
-  // Mock bookings data
-  const [bookings, setBookings] = useState<Booking[]>([
-    {
-      id: 1,
-      chamber: "Chamber 1",
-      date: "23/04/2024",
-      timeSlot: "08:00 - 10:00",
-      name: "John Doe",
-      email: "john@example.com",
-      company: "Tech Corp",
-      antenna: "ANT-001",
-    },
-    {
-      id: 2,
-      chamber: "Chamber 2",
-      date: "23/04/2024",
-      timeSlot: "11:00 - 14:00",
-      name: "Jane Smith",
-      email: "jane@example.com",
-      company: "Innovation Labs",
-      antenna: "ANT-002",
-    },
-  ]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleCancelBooking = (id: number) => {
-    setBookings(bookings.filter(booking => booking.id !== id));
-    toast.success("Booking cancelled successfully", {
-      duration: 3000,
-      position: "top-center",
-      style: {
-        background: "rgba(20, 30, 50, 0.95)",
-        backdropFilter: "blur(20px)",
-        color: "#fff",
-        border: "1px solid rgba(255, 255, 255, 0.2)",
-        borderRadius: "12px",
-        padding: "16px",
-      },
-    });
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (token) {
+      authAPI.verifyToken(token)
+        .then(res => {
+          if (res.valid) setIsAuthenticated(true);
+        })
+        .catch(() => {
+          localStorage.removeItem("adminToken");
+        });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchBookings();
+    }
+  }, [selectedDate, isAuthenticated]);
+
+  const fetchBookings = async () => {
+    setLoading(true);
+    try {
+      const formattedDate = format(selectedDate, "dd/MM/yyyy");
+      const data = await bookingsAPI.getAll({ date: formattedDate });
+      setBookings(data);
+    } catch (error) {
+      console.error("Failed to fetch bookings", error);
+      toast.error("Failed to fetch bookings");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredBookings = bookings.filter(booking => booking.date === selectedDate);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await authAPI.login(email, password);
+      localStorage.setItem("adminToken", res.token);
+      setIsAuthenticated(true);
+      toast.success("Login successful");
+    } catch (error: any) {
+      toast.error(error.message || "Login failed");
+    }
+  };
+
+  const handleCancelBooking = async (id: number) => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      toast.error("Authentication required");
+      return;
+    }
+    try {
+      await bookingsAPI.delete(id, token);
+      setBookings(bookings.filter(booking => booking.id !== id));
+      toast.success("Booking cancelled successfully");
+    } catch (error) {
+      toast.error("Failed to cancel booking");
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
+        <AuroraBackground />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card p-8 z-10 w-full max-w-sm"
+        >
+          <h2 className="text-3xl font-bold text-center mb-6">Admin Login</h2>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@crescent.education"
+              className="w-full glass px-4 py-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full glass px-4 py-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <Button type="submit" className="w-full bg-primary py-3 rounded-lg">
+              Login
+            </Button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -102,9 +161,9 @@ const Admin = () => {
           </label>
           <div className="relative">
             <input
-              type="text"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              type="date"
+              value={format(selectedDate, "yyyy-MM-dd")}
+              onChange={(e) => setSelectedDate(new Date(e.target.value))}
               className="w-full glass px-6 py-3 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all"
               placeholder="DD/MM/YYYY"
             />
@@ -120,7 +179,7 @@ const Admin = () => {
           className="glass-card p-8"
         >
           <h2 className="text-2xl font-semibold mb-6">
-            All Bookings {selectedDate && `for ${selectedDate}`}
+            All Bookings {selectedDate && `for ${format(selectedDate, "dd/MM/yyyy")}`}
           </h2>
           
           <div className="overflow-x-auto">
@@ -137,7 +196,13 @@ const Admin = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredBookings.map((booking, index) => (
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-white/50">
+                      Loading...
+                    </td>
+                  </tr>
+                ) : bookings.map((booking, index) => (
                   <motion.tr
                     key={booking.id}
                     initial={{ opacity: 0, x: -20 }}
@@ -163,7 +228,7 @@ const Admin = () => {
                     </td>
                   </motion.tr>
                 ))}
-                {filteredBookings.length === 0 && (
+                {bookings.length === 0 && !loading && (
                   <tr>
                     <td colSpan={7} className="py-8 text-center text-white/50">
                       No bookings found for this date

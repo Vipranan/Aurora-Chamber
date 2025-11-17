@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
+import { bookingsAPI } from "@/lib/api";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -21,29 +22,61 @@ const BookingModal = ({ isOpen, onClose, chamber, date, timeSlot, onSuccess }: B
     company: "",
     antenna: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!timeSlot) {
+      toast.error("Please select a time slot");
+      return;
+    }
+
+    setIsSubmitting(true);
     
-    toast.success("Booking confirmed successfully!", {
-      duration: 4000,
-      position: "top-center",
-      style: {
-        background: "rgba(20, 30, 50, 0.95)",
-        backdropFilter: "blur(20px)",
-        color: "#fff",
-        border: "1px solid rgba(255, 255, 255, 0.2)",
-        borderRadius: "12px",
-        padding: "16px",
-      },
-    });
-    
-    onSuccess();
-    onClose();
-    setFormData({ name: "", email: "", company: "", antenna: "" });
+    try {
+      await bookingsAPI.create({
+        chamber,
+        date,
+        timeSlot,
+        name: formData.name,
+        email: formData.email,
+        company: formData.company,
+        antenna: formData.antenna,
+      });
+      
+      toast.success("Booking confirmed successfully!", {
+        duration: 4000,
+        position: "top-center",
+        style: {
+          background: "rgba(20, 30, 50, 0.95)",
+          backdropFilter: "blur(20px)",
+          color: "#fff",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          borderRadius: "12px",
+          padding: "16px",
+        },
+      });
+      
+      onSuccess();
+      onClose();
+      setFormData({ name: "", email: "", company: "", antenna: "" });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create booking", {
+        duration: 4000,
+        position: "top-center",
+        style: {
+          background: "rgba(50, 20, 20, 0.95)",
+          backdropFilter: "blur(20px)",
+          color: "#fff",
+          border: "1px solid rgba(255, 100, 100, 0.2)",
+          borderRadius: "12px",
+          padding: "16px",
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

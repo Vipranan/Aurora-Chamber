@@ -1,4 +1,6 @@
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { bookingsAPI } from "@/lib/api";
 
 interface Booking {
   id: number;
@@ -8,10 +10,29 @@ interface Booking {
 
 interface BookingsListProps {
   date: string;
-  bookings: Booking[];
+  refreshKey: number;
 }
 
-const BookingsList = ({ date, bookings }: BookingsListProps) => {
+const BookingsList = ({ date, refreshKey }: BookingsListProps) => {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      setLoading(true);
+      try {
+        const data = await bookingsAPI.getAll({ date });
+        setBookings(data);
+      } catch (error) {
+        console.error("Failed to fetch bookings", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, [date, refreshKey]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -30,19 +51,26 @@ const BookingsList = ({ date, bookings }: BookingsListProps) => {
             </tr>
           </thead>
           <tbody>
-            {bookings.map((booking, index) => (
-              <motion.tr
-                key={booking.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="border-b border-white/5 hover:bg-white/5 transition-colors"
-              >
-                <td className="py-4 px-4 text-white">{booking.chamber}</td>
-                <td className="py-4 px-4 text-white">{booking.timeSlot}</td>
-              </motion.tr>
-            ))}
-            {bookings.length === 0 && (
+            {loading ? (
+              <tr>
+                <td colSpan={2} className="py-8 text-center text-white/50">
+                  Loading bookings...
+                </td>
+              </tr>
+            ) : bookings.length > 0 ? (
+              bookings.map((booking, index) => (
+                <motion.tr
+                  key={booking.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                >
+                  <td className="py-4 px-4 text-white">{booking.chamber}</td>
+                  <td className="py-4 px-4 text-white">{booking.timeSlot}</td>
+                </motion.tr>
+              ))
+            ) : (
               <tr>
                 <td colSpan={2} className="py-8 text-center text-white/50">
                   No bookings for this date
