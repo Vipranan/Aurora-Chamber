@@ -1,57 +1,69 @@
+import React from 'react';
+
 const AuroraBackground = () => {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden">
       {/* Main aurora gradient background */}
-      <div 
+      <div
         className="absolute inset-0 animate-aurora"
         style={{
-          background: 'linear-gradient(120deg, #050f2c, #0d153f, #0a3d4a, #134e4a, #0d153f, #1a1649)',
+          background: 'linear-gradient(120deg, #4a0a0a, #6b210a, #803100, #a04100, #6b210a, #4a0a0a)',
         }}
       />
-      
+
       {/* Animated gradient orbs */}
-      <div 
-        className="absolute top-0 left-1/4 w-96 h-96 rounded-full opacity-30 blur-3xl animate-float"
+      <div
+        className="absolute top-0 left-1/4 w-96 h-96 rounded-full opacity-40 blur-3xl animate-float"
         style={{
-          background: 'radial-gradient(circle, hsl(var(--aurora-cyan)), transparent)',
+          background: 'radial-gradient(circle, hsl(var(--aurora-gold)), transparent)',
           animationDelay: '0s',
         }}
       />
-      <div 
-        className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full opacity-20 blur-3xl animate-float"
+      <div
+        className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full opacity-30 blur-3xl animate-float"
         style={{
-          background: 'radial-gradient(circle, hsl(var(--aurora-blue)), transparent)',
+          background: 'radial-gradient(circle, hsl(var(--aurora-yellow)), transparent)',
           animationDelay: '2s',
         }}
       />
-      <div 
-        className="absolute bottom-1/4 left-1/3 w-96 h-96 rounded-full opacity-25 blur-3xl animate-float"
+      <div
+        className="absolute bottom-1/4 left-1/3 w-96 h-96 rounded-full opacity-35 blur-3xl animate-float"
         style={{
-          background: 'radial-gradient(circle, hsl(var(--aurora-green)), transparent)',
+          background: 'radial-gradient(circle, hsl(var(--aurora-orange)), transparent)',
           animationDelay: '4s',
         }}
       />
-      
-      {/* Starfield effect */}
+
+      {/* Ember particles effect */}
       <div className="absolute inset-0">
-        {[...Array(50)].map((_, i) => (
+        {[...Array(30)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-1 h-1 bg-white rounded-full opacity-50"
+            className="absolute w-1.5 h-1.5 bg-yellow-400 rounded-full"
             style={{
               top: `${Math.random() * 100}%`,
               left: `${Math.random() * 100}%`,
-              animation: `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`,
+              animation: `drift ${5 + Math.random() * 10}s linear infinite`,
+              animationDelay: `${Math.random() * 5}s`,
             }}
           />
         ))}
       </div>
-      
+
       <style>{`
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 1; }
+        @keyframes drift {
+          0% {
+            transform: translate(0, 0);
+            opacity: 0.7;
+          }
+          50% {
+            transform: translate(${Math.random() * 20 - 10}px, -50px);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(${Math.random() * 40 - 20}px, -100px);
+            opacity: 0;
+          }
         }
       `}</style>
     </div>

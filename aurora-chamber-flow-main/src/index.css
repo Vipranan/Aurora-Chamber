@@ -39,11 +39,11 @@ All colors MUST be HSL.
 
     --radius: 1rem;
     
-    /* Aurora gradient colors */
-    --aurora-blue: 190 100% 71%;
-    --aurora-cyan: 177 64% 58%;
-    --aurora-green: 142 100% 81%;
-    --aurora-purple: 251 100% 76%;
+    /* Fire-aurora gradient colors */
+    --aurora-yellow: 45 100% 50%;
+    --aurora-gold: 35 100% 55%;
+    --aurora-orange: 25 100% 50%;
+    --aurora-red: 10 100% 55%;
     
     /* Glass effect */
     --glass-bg: 200 50% 20% / 0.15;
